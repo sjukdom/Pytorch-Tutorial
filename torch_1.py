@@ -1,10 +1,10 @@
 import torch
 
 Corpus = [
-   '<BOS> el puto perro me mordio la mano <EOS>',
-   '<BOS> la puta anciana me tiro un balazo a los pies <EOS>',
-   '<BOS> no mames wey chinga tu madre <EOS>',
-   '<BOS> porque no te vas a la mierda compa <EOS>',
+   '<BOS> el puto perro me mordio la puta mano <EOS>',
+   '<BOS> la puta anciana me tiro un balazo a los putos pies <EOS>',
+   '<BOS> no mames wey chinga tu puta madre <EOS>',
+   '<BOS> porque no te vas a la mierda pinche compa alv <EOS>',
    '<BOS> haste a un lado pinche perro puto <EOS>',
 ]
 
@@ -55,16 +55,16 @@ for pair in bigrams:
 ## Parametros de la red
 N = len(Sigma)
 d = 100
-cell_dim = 100
+rnnDim = 100
 
 ## Embedding
 C = torch.randn(d, N)
 ### Parametros capa 1
-Whh = torch.randn(cell_dim, cell_dim)
-Wxh = torch.randn(cell_dim, d)
-b = torch.randn(cell_dim)
+Whh = torch.randn(rnnDim, rnnDim)
+Wxh = torch.randn(rnnDim, d)
+b = torch.randn(rnnDim)
 ### Parametros capa 2
-W = torch.randn(N-1, cell_dim)
+W = torch.randn(N-1, rnnDim)
 c = torch.zeros(N-1)
 
 ## Estado oculto
@@ -82,9 +82,62 @@ print(V)
 print('\nht0')
 print(ht)
 
+def dTanh(xt):
+   return 1 - torch.tanh(xt)**2
 
-def forward(x):
-   pass
+def forward(xt):
+   xt = E[:, xt]
+   at = torch.matmul(Whh, ht) + torch.matmul(Wxh, xt) + b
+   ht = torch.tanh(at)
+   ot = torch.matmul(V, ht) + c
+   yt = torch.exp(ot - torch.max(ot))/ torch.sum(ot - torch.max(ot))
+   return yt 
+
+def backprop(dt, lr, df):
+   gradL_a = torch.matmul(torch.diag(df()))
+   dV = torch.ger(dt, ht)
+   dc = dt
+   dWhh = 
+   dWxh = 
+   db =
+   dE
+
+
+
+class rnn():
+   def __init__(self, rnnDim, embeddingDim, sigmaSize, activation, weights):
+      if weights:
+         pass
+      else:
+         self.Whh = torch.randn(rnnDim, rnnDim)
+         self.Wxh = torch.randn(rnnDim, embeddingDim)
+         self.b = torch.randn(rnnDim)
+         self.V = torch.randn(sigmaSize-1, rnnDim)
+         self.c = torch.zeros(sigmaSize-1)
+         self.E = torch.randn(embeddingDim, sigmaSize)
+
+   def forward(self, xt):
+      xt = self.E[:, xt]
+      at = torch.matmul(self.Whh, ht) + torch.matmul(self.Wxh, xt) + self.b
+      ht = torch.tanh(at)
+      ot = torch.matmul(self.V, ht) + self.c
+      yt = torch.exp(ot - torch.max(ot))/ torch.sum(ot - torch.max(ot))
+      return yt 
+
+   def backprop(self, delta):
+      
+      return gradients
+
+   def fit(self, x, y, lr, epochs):
+      for epoch in epochs:
+         for wi, wj in zip(x, y):
+            y_hat = self.forward(wi)
+            delta = y_hat[wj] - 1
+            gradients = self.backprop()
+
+   
    
 
 #torch.matmul(Whh, ht) + torch.matmul(Wxh, x)
+
+### sueltalo <-> b-side 
