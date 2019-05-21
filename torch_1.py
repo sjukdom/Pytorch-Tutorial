@@ -1,5 +1,6 @@
 import torch
 import numpy as np
+torch.manual_seed(123)
 
 Corpus = [
    '<BOS> el puto perro me mordio la puta mano <EOS>',
@@ -94,7 +95,6 @@ class RNN():
             for wi, wj, t in zip(x, y, t):
                # Forward
                xt = self.E[:, wi]
-               #print(xt)
                at = torch.matmul(self.Whh, ht[t-1]) + torch.matmul(self.Wxh, xt) + self.b
                ht[t] = torch.tanh(at)
                ot = torch.matmul(self.V, ht[t]) + self.c
@@ -102,7 +102,8 @@ class RNN():
                # Error
                dt = yt - 1
                # Loss 
-               loss.append(-torch.log(yt[wj]+0.001))        
+               loss.append(-torch.log(yt[wj]))     
+               print(yt[wj])   
                # Backprop
                gradL_a = torch.matmul(torch.diag(1-torch.tanh(at)**2), torch.matmul(torch.t(self.V), dt))
                dV = torch.ger(dt, ht[t])
@@ -119,23 +120,13 @@ class RNN():
                self.b -= lr*db
                self.E[:, wi] -= lr*dE
          Loss.append(np.sum(loss))
-         print('Loss E{} = {}'.format(epoch+1, np.sum(loss)))
+         #print('Loss E{} = {}'.format(epoch+1, np.sum(loss)))
          loss.clear()
 
-   
-# rnn = RNN(100, 100, len(Sigma), None)
-
-rnn = RNN(100, 300, len(Sigma), None)
-
-x = [bigram[0] for bigram in bigrams]
-y = [bigram[1] for bigram in bigrams]
-
-print('Sigma size = ', len(Sigma))
+print('\nSigma size = ', len(Sigma))
 print('\n\n')
-
-
-rnn.fit(bigrams, 0.007, 100)
-
-#torch.matmul(Whh, ht) + torch.matmul(Wxh, x)
+   
+rnn = RNN(100, 200, len(Sigma), None)
+rnn.fit(bigrams, 0.0001, 100)
 
 ### sueltalo <-> b-side 
