@@ -1,5 +1,7 @@
 import torch
 import numpy as np
+import matplotlib.pyplot as plt
+import pickle
 torch.manual_seed(123)
 
 Corpus = [
@@ -84,7 +86,9 @@ class RNN():
       Loss = []
       loss = []
       for epoch in range(epochs):
-         for sentence in bigrams:
+         Loss_per_epoch = 0
+         for i, sentence in enumerate(bigrams):
+            #print('\nSentence: ', i)
             # Separar los bigramas en 2 listas
             x = [bigram[0] for bigram in sentence]
             y = [bigram[1] for bigram in sentence]
@@ -93,6 +97,7 @@ class RNN():
             # Inicializar el estado oculto en ceros
             ht = torch.zeros(len(sentence)+1, self.dim)
             for wi, wj, t in zip(x, y, t):
+               #print('t[{}] x={}, y={}'.format(t, indx2word[wi], indx2word[wj]))
                # Forward
                xt = self.E[:, wi]
                at = torch.matmul(self.Whh, ht[t-1]) + torch.matmul(self.Wxh, xt) + self.b
@@ -100,10 +105,12 @@ class RNN():
                ot = torch.matmul(self.V, ht[t]) + self.c
                yt = self.softmax(ot)
                # Error
-               dt = yt - 1
+               yti = torch.zeros(yt.shape)
+               yti[wj] = 1
+               dt = yt - yti
                # Loss 
                loss.append(-torch.log(yt[wj]))     
-               print(yt[wj])   
+               #print(yt[wj])  
                # Backprop
                gradL_a = torch.matmul(torch.diag(1-torch.tanh(at)**2), torch.matmul(torch.t(self.V), dt))
                dV = torch.ger(dt, ht[t])
@@ -119,14 +126,20 @@ class RNN():
                self.Wxh -= lr*dWxh
                self.b -= lr*db
                self.E[:, wi] -= lr*dE
-         Loss.append(np.sum(loss))
-         #print('Loss E{} = {}'.format(epoch+1, np.sum(loss)))
-         loss.clear()
-
-print('\nSigma size = ', len(Sigma))
-print('\n\n')
+            Loss_per_epoch += np.sum(loss)
+            print('Loss E{} Sent{} = {}'.format(epoch+1, i, np.sum(loss)))
+            loss.clear()
+         Loss.append(Loss_per_epoch)
+         Loss_per_epoch = 0
+      return Loss
    
 rnn = RNN(100, 200, len(Sigma), None)
-rnn.fit(bigrams, 0.0001, 100)
+loss = rnn.fit(bigrams, 0.1, 100)
 
+plt.plot(loss, 'r')
+plt.title('Negative log-likelyhood')
+plt.xlabel('Epoch')
+plt.ylabel('Loss')
+plt.grid(True)
+plt.show()
 ### sueltalo <-> b-side 
